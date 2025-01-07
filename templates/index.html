@@ -54,6 +54,16 @@
         .form-container button:hover {
             background-color: #002a59;
         }
+        .time-info {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
@@ -82,24 +92,25 @@
             <button type="submit">Plotar</button>
         </form>
     </div>
+    <div class="time-info" id="timeInfo">
+    </div>
     <script>
-        // Configuração do token do Cesium Ion
         Cesium.Ion.defaultAccessToken = "{{ cesium_ion_token }}";
 
-        // Inicializa o Cesium Viewer
         const viewer = new Cesium.Viewer('cesiumContainer', {
             timeline: false,
-            animation: false,
-            shouldAnimate: true
+            animation: false
         });
 
-        // Dados das posições calculadas
         const positions = {{ positions | tojson }};
-
-        // Converte as posições para formato Cesium
         const positionSamples = [];
         let maxAltitude = -Infinity;
         let maxPosition = null;
+
+        const start = Cesium.JulianDate.fromIso8601(positions[0].Tempo_ISO8601);
+        const stop = Cesium.JulianDate.fromIso8601(positions[positions.length - 1].Tempo_ISO8601);
+        const flightDuration = Cesium.JulianDate.secondsDifference(stop, start);
+        document.getElementById('timeInfo').innerText = `Duração Total do Voo: ${flightDuration.toFixed(2)} segundos`;
 
         positions.forEach(pos => {
             positionSamples.push(Cesium.Cartesian3.fromDegrees(pos.Longitude, pos.Latitude, pos.Altitude));
@@ -109,7 +120,6 @@
             }
         });
 
-        // Adiciona uma linha conectando os pontos
         viewer.entities.add({
             name: "Trajectory",
             polyline: {
@@ -119,7 +129,6 @@
             }
         });
 
-        // Adiciona pontos individuais sem rótulos
         positions.forEach(pos => {
             viewer.entities.add({
                 position: Cesium.Cartesian3.fromDegrees(pos.Longitude, pos.Latitude, pos.Altitude),
@@ -127,7 +136,6 @@
             });
         });
 
-        // Adiciona rótulo apenas no ponto de altitude máxima
         if (maxPosition) {
             viewer.entities.add({
                 position: Cesium.Cartesian3.fromDegrees(maxPosition.Longitude, maxPosition.Latitude, maxPosition.Altitude),
@@ -142,11 +150,6 @@
                 }
             });
         }
-
-        // Ajusta a visão para acompanhar a trajetória
-        viewer.flyTo(viewer.entities, {
-            duration: 3
-        });
     </script>
 </body>
 </html>
