@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AEB | Suborbital</title>
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.97/Build/Cesium/Cesium.js"></script>
+    <link href="https://cesium.com/downloads/cesiumjs/releases/1.97/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+</head>
+<body>
+    <div id="cesiumContainer" style="width: 100%; height: 100vh;"></div>
+    <script>
+        // Configuração do token do Cesium Ion
+        Cesium.Ion.defaultAccessToken = "{{ cesium_ion_token }}";
+
+        // Inicializa o Cesium Viewer
+        const viewer = new Cesium.Viewer('cesiumContainer');
+
+        // Dados das posições calculadas
+        const positions = {{ positions | tojson }};
+
+        // Adiciona as posições ao globo terrestre
+        positions.forEach(pos => {
+            viewer.entities.add({
+                position: Cesium.Cartesian3.fromDegrees(pos.Longitude, pos.Latitude, pos.Altitude),
+                point: { pixelSize: 10, color: Cesium.Color.RED }
+            });
+        });
+    </script>
+</body>
+</html>
