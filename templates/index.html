@@ -3,28 +3,149 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AEB | Suborbital</title>
+    <title>AEB | Suborbital Flight</title>
     <script src="https://cesium.com/downloads/cesiumjs/releases/1.97/Build/Cesium/Cesium.js"></script>
     <link href="https://cesium.com/downloads/cesiumjs/releases/1.97/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+        #cesiumContainer {
+            width: 100%;
+            height: 100vh;
+        }
+        .form-container {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+            max-width: 300px;
+        }
+        .form-container h2 {
+            margin-top: 0;
+            font-size: 18px;
+        }
+        .form-container label {
+            font-size: 14px;
+            margin-top: 8px;
+        }
+        .form-container input {
+            width: 100%;
+            padding: 8px;
+            margin-top: 4px;
+            margin-bottom: 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .form-container button {
+            width: 100%;
+            padding: 10px;
+            background-color: #003c7c;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .form-container button:hover {
+            background-color: #002a59;
+        }
+    </style>
 </head>
 <body>
-    <div id="cesiumContainer" style="width: 100%; height: 100vh;"></div>
+    <div id="cesiumContainer"></div>
+    <div class="form-container">
+        <h2>Parâmetros do Voo</h2>
+        <form method="POST" action="/">
+            <label for="lat0">Latitude Inicial:</label>
+            <input type="number" step="any" id="lat0" name="lat0" value="{{ lat0 }}" required>
+
+            <label for="long0">Longitude Inicial:</label>
+            <input type="number" step="any" id="long0" name="long0" value="{{ long0 }}" required>
+
+            <label for="h0">Altitude Inicial [m]:</label>
+            <input type="number" step="any" id="h0" name="h0" value="{{ h0 }}" required>
+
+            <label for="v0">Velocidade Inicial [m/s]:</label>
+            <input type="number" step="any" id="v0" name="v0" value="{{ v0 }}" required>
+
+            <label for="elev">Ângulo de Elevação [°]:</label>
+            <input type="number" step="any" id="elev" name="elev" value="{{ elev }}" required>
+
+            <label for="azi">Azimute [°]:</label>
+            <input type="number" step="any" id="azi" name="azi" value="{{ azi }}" required>
+
+            <button type="submit">Plotar</button>
+        </form>
+    </div>
     <script>
         // Configuração do token do Cesium Ion
         Cesium.Ion.defaultAccessToken = "{{ cesium_ion_token }}";
 
         // Inicializa o Cesium Viewer
-        const viewer = new Cesium.Viewer('cesiumContainer');
+        const viewer = new Cesium.Viewer('cesiumContainer', {
+            timeline: false,
+            animation: false,
+            shouldAnimate: true
+        });
 
         // Dados das posições calculadas
         const positions = {{ positions | tojson }};
 
-        // Adiciona as posições ao globo terrestre
+        // Converte as posições para formato Cesium
+        const positionSamples = [];
+        let maxAltitude = -Infinity;
+        let maxPosition = null;
+
+        positions.forEach(pos => {
+            positionSamples.push(Cesium.Cartesian3.fromDegrees(pos.Longitude, pos.Latitude, pos.Altitude));
+            if (pos.Altitude > maxAltitude) {
+                maxAltitude = pos.Altitude;
+                maxPosition = pos;
+            }
+        });
+
+        // Adiciona uma linha conectando os pontos
+        viewer.entities.add({
+            name: "Trajectory",
+            polyline: {
+                positions: positionSamples,
+                width: 3,
+                material: Cesium.Color.YELLOW
+            }
+        });
+
+        // Adiciona pontos individuais sem rótulos
         positions.forEach(pos => {
             viewer.entities.add({
                 position: Cesium.Cartesian3.fromDegrees(pos.Longitude, pos.Latitude, pos.Altitude),
-                point: { pixelSize: 10, color: Cesium.Color.RED }
+                point: { pixelSize: 8, color: Cesium.Color.RED }
             });
+        });
+
+        // Adiciona rótulo apenas no ponto de altitude máxima
+        if (maxPosition) {
+            viewer.entities.add({
+                position: Cesium.Cartesian3.fromDegrees(maxPosition.Longitude, maxPosition.Latitude, maxPosition.Altitude),
+                point: { pixelSize: 10, color: Cesium.Color.BLUE },
+                label: {
+                    text: `Alt Máx: ${maxPosition.Altitude.toFixed(2)} m`,
+                    font: '14px sans-serif',
+                    showBackground: true,
+                    backgroundColor: Cesium.Color.BLACK,
+                    fillColor: Cesium.Color.WHITE,
+                    disableDepthTestDistance: Number.POSITIVE_INFINITY
+                }
+            });
+        }
+
+        // Ajusta a visão para acompanhar a trajetória
+        viewer.flyTo(viewer.entities, {
+            duration: 3
         });
     </script>
 </body>

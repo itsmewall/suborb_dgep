@@ -12,8 +12,6 @@ Updated on Jan 07 2025
 """
 
 app = Flask(__name__)
-
-# Constantes
 Rt = 6400000
 tz_London = pytz.timezone('Europe/London')
 
@@ -30,11 +28,9 @@ def sub_EM(lat0, long0, H0, V0, Elev, Azi):
     v0 = float(V0)
     elev = float(Elev)
     azi = float(Azi)
-
     vNorte = v0 * np.cos(np.radians(elev)) * np.cos(np.radians(azi))
     vLeste = v0 * np.cos(np.radians(elev)) * np.sin(np.radians(azi))
     V0z = v0 * np.sin(np.radians(elev))
-
     passo = 1
     g = 9.81
     t = 0
@@ -42,7 +38,6 @@ def sub_EM(lat0, long0, H0, V0, Elev, Azi):
     plotLongs = []
     plotZ = []
     tempo = []
-
     Z = h0
     while Z >= 0:
         if plotLats == []:
@@ -63,30 +58,32 @@ def sub_EM(lat0, long0, H0, V0, Elev, Azi):
     df = pd.DataFrame(resultados).T
     df.columns = ["Tempo", "Latitude", "Longitude", "Altitude"]
     df['Tempo'] = df['Tempo'].astype(int)
-
     reference_time = datetime.utcnow()
     df['Tempo_ISO8601'] = (reference_time + pd.to_timedelta(df['Tempo'], unit='s')).astype(str)
-
     return df[['Latitude', 'Longitude', 'Altitude', 'Tempo_ISO8601']]
 
-@app.route('/')
+@app.route('/', methods=['GET', 'POST'])
 def index():
+    lat0 = -2
+    long0 = 0
+    h0 = 0
+    v0 = 2079.90371637393
+    elev = 87.3
+    azi = 0
+
+    if request.method == 'POST':
+        lat0 = float(request.form['lat0'])
+        long0 = float(request.form['long0'])
+        h0 = float(request.form['h0'])
+        v0 = float(request.form['v0'])
+        elev = float(request.form['elev'])
+        azi = float(request.form['azi'])
+
     cesium_ion_token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJjOWE3NjlkYy05MzcxLTQzOTEtODEzYS1iN2VjOGQzNTQwYzciLCJpZCI6MTk3NDUzLCJpYXQiOjE3MzYyNzg2MjB9.3TiujUpyH9xoNRM3H1GjdrEtpdYNY1dXUiJT2yLnKJ4"
-    positions = sub_EM(-2, 0, 0, 2079.90371637393, 87.3, 0).to_dict(orient='records')
-    return render_template('index.html', cesium_ion_token=cesium_ion_token, positions=positions)
-
-@app.route('/calculate', methods=['POST'])
-def calculate():
-    data = request.json
-    lat0 = float(data['lat0'])
-    long0 = float(data['long0'])
-    h0 = float(data['h0'])
-    v0 = float(data['v0'])
-    elev = float(data['elev'])
-    azi = float(data['azi'])
-
     positions = sub_EM(lat0, long0, h0, v0, elev, azi).to_dict(orient='records')
-    return jsonify(positions)
+
+    return render_template('index.html', cesium_ion_token=cesium_ion_token, positions=positions,
+                           lat0=lat0, long0=long0, h0=h0, v0=v0, elev=elev, azi=azi)
 
 if __name__ == '__main__':
     app.run(debug=True)
