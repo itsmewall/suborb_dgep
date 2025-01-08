@@ -86,4 +86,4 @@ def index():
                            lat0=lat0, long0=long0, h0=h0, v0=v0, elev=elev, azi=azi)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0')
