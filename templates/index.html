@@ -102,6 +102,15 @@
             animation: false
         });
     
+        const geoJsonUrl = 'https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/brazil-states.geojson';
+        Cesium.GeoJsonDataSource.load(geoJsonUrl, {
+            stroke: Cesium.Color.WHITE,
+            fill: Cesium.Color.TRANSPARENT,
+            strokeWidth: 2
+        }).then(dataSource => {
+            viewer.dataSources.add(dataSource);
+        });
+    
         window.setFlightParameters = function(latitude, longitude) {
             const latInput = document.getElementById('lat0');
             const longInput = document.getElementById('long0');
@@ -145,8 +154,6 @@
                             <tr><th>Nome</th><td>${point.name}</td></tr>
                             <tr><th>Latitude</th><td>${point.latitude}</td></tr>
                             <tr><th>Longitude</th><td>${point.longitude}</td></tr>
-                            <tr><td colspan="2">
-                            </td></tr>
                         </tbody>
                     </table>
                 `
@@ -201,6 +208,7 @@
                 }
             });
         }
-    </script>     
+    </script>
+      
 </body>
 </html>
