@@ -96,22 +96,61 @@
     </div>
     <script>
         Cesium.Ion.defaultAccessToken = "{{ cesium_ion_token }}";
-
+    
         const viewer = new Cesium.Viewer('cesiumContainer', {
             timeline: false,
             animation: false
         });
-
+    
+        // Adiciona as divisas territoriais do Brasil a partir de um arquivo GeoJSON
+        const geoJsonUrl = 'https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/brazil-states.geojson';
+    
+        Cesium.GeoJsonDataSource.load(geoJsonUrl, {
+            stroke: Cesium.Color.WHITE,
+            fill: Cesium.Color.fromAlpha(Cesium.Color.BLUE, 0.1),
+            strokeWidth: 2
+        }).then(dataSource => {
+            viewer.dataSources.add(dataSource);
+            viewer.flyTo(dataSource); // Ajusta a câmera para exibir as divisas
+        });
+    
+        // Adiciona os pontos de interesse no setor espacial brasileiro
+        const pointsOfInterest = [
+            { name: "AEB", latitude: -15.815705837223435, longitude: -47.943092742330144 },
+            { name: "ITA", latitude: -23.210654448964856, longitude: -45.87525185899979 },
+            { name: "INPE", latitude: -23.206328880964584, longitude: -45.86110320666238 },
+            { name: "CLBI", latitude: -5.9165, longitude: -35.2420 },
+            { name: "CLA", latitude: -2.3707, longitude: -44.3965 },
+            { name: "UFRN", latitude: -5.8390, longitude: -35.2075 },
+            { name: "Observatório Nacional", latitude: -22.9035, longitude: -43.2096 }
+        ];
+    
+        pointsOfInterest.forEach(point => {
+            viewer.entities.add({
+                position: Cesium.Cartesian3.fromDegrees(point.longitude, point.latitude, 0),
+                point: { pixelSize: 10, color: Cesium.Color.BLUE },
+                label: {
+                    text: point.name,
+                    font: '14px sans-serif',
+                    showBackground: true,
+                    backgroundColor: Cesium.Color.BLACK,
+                    fillColor: Cesium.Color.WHITE,
+                    verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+                    pixelOffset: new Cesium.Cartesian2(0, -15)
+                }
+            });
+        });
+    
         const positions = {{ positions | tojson }};
         const positionSamples = [];
         let maxAltitude = -Infinity;
         let maxPosition = null;
-
+    
         const start = Cesium.JulianDate.fromIso8601(positions[0].Tempo_ISO8601);
         const stop = Cesium.JulianDate.fromIso8601(positions[positions.length - 1].Tempo_ISO8601);
         const flightDuration = Cesium.JulianDate.secondsDifference(stop, start);
         document.getElementById('timeInfo').innerText = `Duração Total do Voo: ${flightDuration.toFixed(2)} segundos`;
-
+    
         positions.forEach(pos => {
             positionSamples.push(Cesium.Cartesian3.fromDegrees(pos.Longitude, pos.Latitude, pos.Altitude));
             if (pos.Altitude > maxAltitude) {
@@ -119,7 +158,7 @@
                 maxPosition = pos;
             }
         });
-
+    
         viewer.entities.add({
             name: "Trajectory",
             polyline: {
@@ -128,14 +167,14 @@
                 material: Cesium.Color.YELLOW
             }
         });
-
+    
         positions.forEach(pos => {
             viewer.entities.add({
                 position: Cesium.Cartesian3.fromDegrees(pos.Longitude, pos.Latitude, pos.Altitude),
                 point: { pixelSize: 8, color: Cesium.Color.RED }
             });
         });
-
+    
         if (maxPosition) {
             viewer.entities.add({
                 position: Cesium.Cartesian3.fromDegrees(maxPosition.Longitude, maxPosition.Latitude, maxPosition.Altitude),
@@ -150,6 +189,6 @@
                 }
             });
         }
-    </script>
+    </script>    
 </body>
 </html>
