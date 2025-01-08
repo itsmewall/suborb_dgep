@@ -102,27 +102,28 @@
             animation: false
         });
     
-        // Adiciona as divisas territoriais do Brasil a partir de um arquivo GeoJSON
-        const geoJsonUrl = 'https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/brazil-states.geojson';
+        window.setFlightParameters = function(latitude, longitude) {
+            const latInput = document.getElementById('lat0');
+            const longInput = document.getElementById('long0');
     
-        Cesium.GeoJsonDataSource.load(geoJsonUrl, {
-            stroke: Cesium.Color.WHITE,
-            fill: Cesium.Color.fromAlpha(Cesium.Color.BLUE, 0.1),
-            strokeWidth: 2
-        }).then(dataSource => {
-            viewer.dataSources.add(dataSource);
-            viewer.flyTo(dataSource); // Ajusta a câmera para exibir as divisas
-        });
+            if (latInput && longInput) {
+                latInput.value = latitude;
+                longInput.value = longitude;
+                alert(`Coordenadas atualizadas: \nLatitude: ${latitude}\nLongitude: ${longitude}`);
+            } else {
+                alert('Erro: Campos de Latitude e Longitude não encontrados.');
+            }
+        };
     
-        // Adiciona os pontos de interesse no setor espacial brasileiro
         const pointsOfInterest = [
             { name: "AEB", latitude: -15.815705837223435, longitude: -47.943092742330144 },
-            { name: "ITA", latitude: -23.210654448964856, longitude: -45.87525185899979 },
-            { name: "INPE", latitude: -23.206328880964584, longitude: -45.86110320666238 },
-            { name: "CLBI", latitude: -5.9165, longitude: -35.2420 },
-            { name: "CLA", latitude: -2.3707, longitude: -44.3965 },
-            { name: "UFRN", latitude: -5.8390, longitude: -35.2075 },
-            { name: "Observatório Nacional", latitude: -22.9035, longitude: -43.2096 }
+            { name: "ITA", latitude: -23.210634748989186, longitude: -45.87525185581791 },
+            { name: "INPE", latitude: -23.205445526541197, longitude: -45.860483965621995 },
+            { name: "CLBI", latitude: -5.920868339385589, longitude: -35.16829456959344 },
+            { name: "CLA", latitude: -2.3151701994050606, longitude: -44.37001086654348 },
+            { name: "UFRN", latitude: -5.83336205675998, longitude: -35.203596062979564 },
+            { name: "INPE - Cuiabá", latitude: -15.555224869873786, longitude: -56.07031165020688 },
+            { name: "Observatório Nacional", latitude: -22.894758674060434, longitude: -43.22549836165626 }
         ];
     
         pointsOfInterest.forEach(point => {
@@ -137,7 +138,18 @@
                     fillColor: Cesium.Color.WHITE,
                     verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
                     pixelOffset: new Cesium.Cartesian2(0, -15)
-                }
+                },
+                description: `
+                    <table class="cesium-infoBox-defaultTable">
+                        <tbody>
+                            <tr><th>Nome</th><td>${point.name}</td></tr>
+                            <tr><th>Latitude</th><td>${point.latitude}</td></tr>
+                            <tr><th>Longitude</th><td>${point.longitude}</td></tr>
+                            <tr><td colspan="2">
+                            </td></tr>
+                        </tbody>
+                    </table>
+                `
             });
         });
     
@@ -189,6 +201,6 @@
                 }
             });
         }
-    </script>    
+    </script>     
 </body>
 </html>
